@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Paint App - Engine UI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
+    body{overflow:hidden;background:#2d2d30;color:#ccc}
+    .container{display:grid;height:100vh;grid-template-columns:250px 1fr 300px;grid-template-rows:40px 1fr 0px;grid-template-areas:"header header header" "sidebar viewport properties" "timeline timeline timeline";}
+    .header{grid-area:header;background:#3e3e42;border-bottom:1px solid #1e1e1e;display:flex;align-items:center;padding:0 15px}
+    .menu{display:flex;gap:20px}
+    .menu-item{font-size:13px;cursor:pointer;padding:5px 10px;border-radius:3px}
+    .menu-item:hover{background:#2d2d30}
+    .sidebar{grid-area:sidebar;background:#252526;border-right:1px solid #1e1e1e;padding:10px;overflow-y:auto}
+    .panel{margin-bottom:15px}
+    .panel-header{font-size:12px;text-transform:uppercase;color:#969696;padding:5px 0;display:flex;justify-content:space-between;align-items:center}
+    .panel-content{padding:5px 0}
+    .hierarchy-item{padding:5px 10px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;border-radius:3px}
+    .hierarchy-item:hover{background:#2a2d2e}
+    .hierarchy-item.active{background:#37373d}
+    .viewport{grid-area:viewport;position:relative;overflow:hidden;background:#fff}
+    .viewport-overlay{position:absolute;top:10px;left:10px;color:white;font-size:12px;background:rgba(0,0,0,.5);padding:5px 10px;border-radius:3px;pointer-events:none}
+    .viewport-controls{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:5px}
+    .viewport-btn{width:30px;height:30px;background:rgba(30,30,30,.8);border:1px solid #3e3e42;color:#ccc;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .viewport-btn:hover{background:rgba(30,30,30,1)}
+    .properties{grid-area:properties;background:#252526;border-left:1px solid #1e1e1e;padding:15px;overflow-y:auto}
+    .property-group{margin-bottom:15px}
+    .property-item{margin-bottom:10px}
+    .property-label{font-size:12px;color:#969696;margin-bottom:5px}
+    .property-input{width:100%;background:#3c3c3c;border:1px solid #1e1e1e;color:#ccc;padding:5px 8px;border-radius:3px}
+    .property-slider{width:100%}
+    .tabs{display:flex;border-bottom:1px solid #1e1e1e;margin-bottom:10px}
+    .tab{padding:5px 15px;font-size:12px;cursor:pointer;border-bottom:2px solid transparent}
+    .tab.active{border-bottom:2px solid #007acc;color:#fff}
+    .status-bar{position:fixed;bottom:0;left:0;right:0;height:22px;background:#007acc;display:flex;align-items:center;padding:0 10px;font-size:12px;z-index:1000}
+    .toolbar{position:absolute;top:50px;left:10px;display:flex;flex-direction:column;gap:5px;background:rgba(30,30,30,.8);padding:5px;border-radius:3px;border:1px solid #3e3e42}
+    .tool-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px}
+    .tool-btn:hover{background:#37373d}
+    .tool-btn.active{background:#007acc}
+    .timeline{display:none}
+    /* small helper for disabled inputs */
+    .disabled{opacity:.6;pointer-events:none}
+    
+    /* Canvas styling */
+    #paint-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+    }
+    
+    /* Color picker */
+    .color-picker {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+    }
+    .color-option {
+      width: 20px;
+      height: 20px;
+      border-radius: 3px;
+      cursor: pointer;
+      border: 1px solid #555;
+    }
+    .color-option.active {
+      border: 2px solid white;
+      box-shadow: 0 0 5px rgba(255,255,255,0.5);
+    }
+    
+    /* Brush preview */
+    .brush-preview {
+      width: 100%;
+      height: 40px;
+      background: #3c3c3c;
+      border-radius: 3px;
+      margin-top: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .brush-preview-circle {
+      border-radius: 50%;
+      background: currentColor;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="menu">
+        <a href="index.html"><div class="menu-item"><i class="fas fa-home"></i> </div></a>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="panel">
+        <div class="panel-header">
+          <span>Tools</span>
+        </div>
+        <div id="hierarchy" class="panel-content">
+          <div class="hierarchy-item active" data-tool="brush"><i class="fas fa-paint-brush"></i><span>Brush</span></div>
+          <div class="hierarchy-item" data-tool="eraser"><i class="fas fa-eraser"></i><span>Eraser</span></div>
+          <div class="hierarchy-item" data-tool="line"><i class="fas fa-minus"></i><span>Line</span></div>
+          <div class="hierarchy-item" data-tool="rectangle"><i class="fas fa-square"></i><span>Rectangle</span></div>
+          <div class="hierarchy-item" data-tool="circle"><i class="fas fa-circle"></i><span>Circle</span></div>
+          <div class="hierarchy-item" data-tool="fill"><i class="fas fa-fill-drip"></i><span>Fill</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span>Layers</span></div>
+        <div class="panel-content">
+          <div class="hierarchy-item"><i class="fas fa-eye"></i><span>Background</span></div>
+          <div class="hierarchy-item active"><i class="fas fa-eye"></i><span>Layer 1</span></div>
+          <div class="hierarchy-item"><i class="fas fa-eye"></i><span>Layer 2</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Viewport -->
+    <div class="viewport" id="viewport">
+      <div class="viewport-overlay">Canvas</div>
+      <canvas id="paint-canvas"></canvas>
+      <div class="toolbar">
+        <div class="tool-btn active"><i class="fas fa-hand-paper"></i></div>
+        <div class="tool-btn"><i class="fas fa-arrows-alt"></i></div>
+        <div class="tool-btn"><i class="fas fa-sync"></i></div>
+        <div class="tool-btn"><i class="fas fa-expand"></i></div>
+      </div>
+      <div class="viewport-controls">
+        <div class="viewport-btn" id="clear"><i class="fas fa-trash"></i></div>
+        <div class="viewport-btn" id="save"><i class="fas fa-save"></i></div>
+        <div class="viewport-btn" id="settings"><i class="fas fa-cog"></i></div>
+      </div>
+    </div>
+
+    <!-- Properties -->
+    <div class="properties">
+      <div class="tabs">
+        <div class="tab active">Properties</div>
+        <div class="tab">Materials</div>
+        <div class="tab">History</div>
+      </div>
+
+      <div class="property-group">
+        <div class="panel-header">Brush</div>
+        <div class="property-item">
+          <div class="property-label">Size</div>
+          <input id="prop-brushSize" type="range" class="property-slider" min="1" max="50" value="5" step="1">
+        </div>
+        <div class="property-item">
+          <div class="property-label">Opacity</div>
+          <input id="prop-opacity" type="range" class="property-slider" min="0.1" max="1" value="1" step="0.1">
+        </div>
+        <div class="property-item">
+          <div class="property-label">Hardness</div>
+          <input id="prop-hardness" type="range" class="property-slider" min="0" max="1" value="1" step="0.1">
+        </div>
+        <div class="property-item">
+          <div class="property-label">Brush Preview</div>
+          <div class="brush-preview">
+            <div id="brush-preview-circle" class="brush-preview-circle"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="property-group">
+        <div class="panel-header">Colors</div>
+        <div class="property-item">
+          <div class="property-label">Current Color</div>
+          <input id="prop-color" type="color" class="property-input" value="#ff0000">
+        </div>
+        <div class="property-item">
+          <div class="property-label">Palette</div>
+          <div class="color-picker">
+            <div class="color-option active" style="background-color: #ff0000;" data-color="#ff0000"></div>
+            <div class="color-option" style="background-color: #00ff00;" data-color="#00ff00"></div>
+            <div class="color-option" style="background-color: #0000ff;" data-color="#0000ff"></div>
+            <div class="color-option" style="background-color: #ffff00;" data-color="#ffff00"></div>
+            <div class="color-option" style="background-color: #ff00ff;" data-color="#ff00ff"></div>
+            <div class="color-option" style="background-color: #00ffff;" data-color="#00ffff"></div>
+            <div class="color-option" style="background-color: #000000;" data-color="#000000"></div>
+            <div class="color-option" style="background-color: #ffffff;" data-color="#ffffff"></div>
+            <div class="color-option" style="background-color: #ffa500;" data-color="#ffa500"></div>
+            <div class="color-option" style="background-color: #800080;" data-color="#800080"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="property-group">
+        <div class="panel-header">Canvas</div>
+        <div class="property-item">
+          <div class="property-label">Background Color</div>
+          <input id="prop-bgColor" type="color" class="property-input" value="#ffffff">
+        </div>
+        <div class="property-item">
+          <div class="property-label">Grid</div>
+          <input id="prop-grid" type="checkbox" class="property-input">
+        </div>
+      </div>
+    </div>
+
+    <!-- Timeline (hidden for now) -->
+    <div class="timeline"></div>
+  </div>
+
+  <div class="status-bar">
+    <div style="margin-right:15px;">Ready</div>
+    <div id="fps" style="margin-right:15px;">FPS: —</div>
+    <div id="cursor">Cursor: (0, 0)</div>
+  </div>
+
+  <script>
+    // ---------- Paint App Setup ----------
+    const viewport = document.getElementById('viewport');
+    const canvas = document.getElementById('paint-canvas');
+    const ctx = canvas.getContext('2d');
+
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+    // Paint state
+    let isDrawing = false;
+    let lastX = 0;
+    let lastY = 0;
+    let currentTool = 'brush';
+    let currentColor = '#ff0000';
+    let brushSize = 5;
+    let opacity = 1;
+    let hardness = 1;
+    let bgColor = '#ffffff';
+    let showGrid = false;
+
+    // Initialize canvas
+    function resizeCanvas() {
+      canvas.width = viewport.clientWidth;
+      canvas.height = viewport.clientHeight;
+      clearCanvas();
+    }
+
+    function clearCanvas() {
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      if (showGrid) drawGrid();
+    }
+
+    function drawGrid() {
+      ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+      ctx.lineWidth = 1;
+      
+      // Vertical lines
+      for (let x = 0; x <= canvas.width; x += 20) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      
+      // Horizontal lines
+      for (let y = 0; y <= canvas.height; y += 20) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+    }
+
+    // Drawing functions
+    function startDrawing(e) {
+      isDrawing = true;
+      [lastX, lastY] = getMousePos(e);
+      
+      if (currentTool === 'fill') {
+        floodFill(lastX, lastY);
+        isDrawing = false;
+      }
+    }
+
+    function draw(e) {
+      if (!isDrawing) return;
+      
+      const [x, y] = getMousePos(e);
+      
+      ctx.globalAlpha = opacity;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      switch(currentTool) {
+        case 'brush':
+          ctx.strokeStyle = currentColor;
+          ctx.lineWidth = brushSize;
+          ctx.globalCompositeOperation = 'source-over';
+          
+          ctx.beginPath();
+          ctx.moveTo(lastX, lastY);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+          break;
+          
+        case 'eraser':
+          ctx.strokeStyle = bgColor;
+          ctx.lineWidth = brushSize;
+          ctx.globalCompositeOperation = 'destination-out';
+          
+          ctx.beginPath();
+          ctx.moveTo(lastX, lastY);
+          ctx.lineTo(x, y);
+          ctx.stroke();
+          break;
+          
+        case 'line':
+          // Temporary line drawing - will be finalized on mouse up
+          break;
+          
+        case 'rectangle':
+          // Temporary rectangle drawing - will be finalized on mouse up
+          break;
+          
+        case 'circle':
+          // Temporary circle drawing - will be finalized on mouse up
+          break;
+      }
+      
+      [lastX, lastY] = [x, y];
+    }
+
+    function stopDrawing() {
+      isDrawing = false;
+    }
+
+    function getMousePos(e) {
+      const rect = canvas.getBoundingClientRect();
+      return [
+        e.clientX - rect.left,
+        e.clientY - rect.top
+      ];
+    }
+
+    // Flood fill algorithm
+    function floodFill(startX, startY) {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      const stack = [[startX, startY]];
+      const targetColor = getPixelColor(imageData, startX, startY);
+      const fillColor = hexToRgb(currentColor);
+      
+      if (colorsMatch(targetColor, fillColor)) return;
+      
+      while (stack.length > 0) {
+        const [x, y] = stack.pop();
+        const index = (y * canvas.width + x) * 4;
+        
+        if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) continue;
+        if (!colorsMatch(getPixelColor(imageData, x, y), targetColor)) continue;
+        
+        // Set the pixel color
+        data[index] = fillColor.r;
+        data[index + 1] = fillColor.g;
+        data[index + 2] = fillColor.b;
+        data[index + 3] = 255;
+        
+        // Add neighboring pixels to the stack
+        stack.push([x + 1, y]);
+        stack.push([x - 1, y]);
+        stack.push([x, y + 1]);
+        stack.push([x, y - 1]);
+      }
+      
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    function getPixelColor(imageData, x, y) {
+      const index = (y * imageData.width + x) * 4;
+      return {
+        r: imageData.data[index],
+        g: imageData.data[index + 1],
+        b: imageData.data[index + 2],
+        a: imageData.data[index + 3]
+      };
+    }
+
+    function colorsMatch(color1, color2) {
+      return color1.r === color2.r && 
+             color1.g === color2.g && 
+             color1.b === color2.b && 
+             color1.a === color2.a;
+    }
+
+    function hexToRgb(hex) {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : {r: 0, g: 0, b: 0};
+    }
+
+    // Update brush preview
+    function updateBrushPreview() {
+      const preview = document.getElementById('brush-preview-circle');
+      preview.style.width = `${brushSize}px`;
+      preview.style.height = `${brushSize}px`;
+      preview.style.backgroundColor = currentColor;
+      preview.style.opacity = opacity;
+    }
+
+    // ---------- UI Event Handlers ----------
+    // Tool selection
+    $$('#hierarchy .hierarchy-item').forEach(el => {
+      el.addEventListener('click', () => {
+        $$('#hierarchy .hierarchy-item').forEach(item => item.classList.remove('active'));
+        el.classList.add('active');
+        currentTool = el.dataset.tool;
+      });
+    });
+
+    // Brush properties
+    $('#prop-brushSize').addEventListener('input', e => {
+      brushSize = parseInt(e.target.value);
+      updateBrushPreview();
+    });
+
+    $('#prop-opacity').addEventListener('input', e => {
+      opacity = parseFloat(e.target.value);
+      updateBrushPreview();
+    });
+
+    $('#prop-hardness').addEventListener('input', e => {
+      hardness = parseFloat(e.target.value);
+      // Note: Hardness would affect brush shape in a more advanced implementation
+    });
+
+    // Color selection
+    $('#prop-color').addEventListener('input', e => {
+      currentColor = e.target.value;
+      updateBrushPreview();
+      
+      // Update active color in palette
+      $$('.color-option').forEach(option => {
+        option.classList.toggle('active', option.dataset.color === currentColor);
+      });
+    });
+
+    // Color palette
+    $$('.color-option').forEach(option => {
+      option.addEventListener('click', () => {
+        currentColor = option.dataset.color;
+        $('#prop-color').value = currentColor;
+        updateBrushPreview();
+        
+        $$('.color-option').forEach(opt => opt.classList.remove('active'));
+        option.classList.add('active');
+      });
+    });
+
+    // Canvas properties
+    $('#prop-bgColor').addEventListener('input', e => {
+      bgColor = e.target.value;
+      clearCanvas();
+    });
+
+    $('#prop-grid').addEventListener('change', e => {
+      showGrid = e.target.checked;
+      clearCanvas();
+    });
+
+    // Viewport controls
+    $('#clear').addEventListener('click', clearCanvas);
+    
+    $('#save').addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'painting.png';
+      link.href = canvas.toDataURL();
+      link.click();
+    });
+
+    // Mouse events
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+
+    // Update cursor position
+    canvas.addEventListener('mousemove', e => {
+      const [x, y] = getMousePos(e);
+      $('#cursor').textContent = `Cursor: (${Math.round(x)}, ${Math.round(y)})`;
+    });
+
+    // ---------- Animation Loop ----------
+    let last = performance.now();
+    function animate(now) {
+      requestAnimationFrame(animate);
+      const dt = (now - last) / 1000; last = now;
+      
+      // Update FPS counter
+      $('#fps').textContent = `FPS: ${Math.round(1/Math.max(dt,1e-3))}`;
+    }
+    requestAnimationFrame(animate);
+
+    // Initialize
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    updateBrushPreview();
+  </script>
+</body>
+</html>
