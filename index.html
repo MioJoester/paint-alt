@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Paint Alt - Web</title>
+  <title>Paint App - Enhanced</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
     body{overflow:hidden;background:#f5f5f7;color:#333}
-    .container{display:grid;height:100vh;grid-template-columns:250px 1fr 300px;grid-template-rows:40px 1fr 0px;grid-template-areas:"header header header" "sidebar viewport properties" "timeline timeline timeline";}
+    .container{display:grid;height:100vh;grid-template-columns:1fr 350px;grid-template-rows:40px 1fr 0px;grid-template-areas:"header header" "viewport sidebar" "timeline timeline";}
     .header{grid-area:header;background:#f8f8f8;border-bottom:1px solid #e1e1e1;display:flex;align-items:center;padding:0 15px}
     .menu{display:flex;gap:20px}
     .menu-item{font-size:13px;cursor:pointer;padding:5px 10px;border-radius:3px;color:#444}
     .menu-item:hover{background:#e9e9e9}
-    .sidebar{grid-area:sidebar;background:#f0f0f0;border-right:1px solid #d1d1d1;padding:10px;overflow-y:auto}
-    .panel{margin-bottom:15px}
+    .sidebar{grid-area:sidebar;background:#f0f0f0;border-left:1px solid #d1d1d1;padding:15px;overflow-y:auto;display:flex;flex-direction:column;gap:15px}
+    .panel{margin-bottom:0}
     .panel-header{font-size:12px;text-transform:uppercase;color:#666;padding:5px 0;display:flex;justify-content:space-between;align-items:center}
     .panel-content{padding:5px 0}
     .hierarchy-item{padding:5px 10px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;border-radius:3px;color:#444}
@@ -25,7 +25,7 @@
     .viewport-controls{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:5px}
     .viewport-btn{width:30px;height:30px;background:rgba(255,255,255,.9);border:1px solid #ccc;color:#555;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center}
     .viewport-btn:hover{background:rgba(240,240,240,1)}
-    .properties{grid-area:properties;background:#f0f0f0;border-left:1px solid #d1d1d1;padding:15px;overflow-y:auto}
+    .properties{overflow-y:auto}
     .property-group{margin-bottom:15px}
     .property-item{margin-bottom:10px}
     .property-label{font-size:12px;color:#666;margin-bottom:5px}
@@ -51,23 +51,45 @@
       cursor: crosshair;
     }
     
-    /* Color picker */
+    /* Enhanced Color picker */
     .color-picker {
       display: flex;
       flex-wrap: wrap;
-      gap: 5px;
+      gap: 8px;
       margin-top: 10px;
+      justify-content: space-between;
     }
     .color-option {
-      width: 20px;
-      height: 20px;
-      border-radius: 3px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
       cursor: pointer;
-      border: 1px solid #ccc;
+      border: 2px solid transparent;
+      transition: transform 0.1s ease, border-color 0.1s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .color-option:hover {
+      transform: scale(1.1);
     }
     .color-option.active {
       border: 2px solid #0078d7;
-      box-shadow: 0 0 5px rgba(0,120,215,0.5);
+      transform: scale(1.15);
+      box-shadow: 0 0 0 2px rgba(0,120,215,0.3);
+    }
+    
+    /* Current color display */
+    .current-color-display {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .current-color-box {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      border: 2px solid #ccc;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     
     /* Brush preview */
@@ -149,15 +171,70 @@
       height: 100%;
       pointer-events: none;
     }
-
-    .auth-indication {
-      font-size:13px;
-      cursor:pointer;
-      padding:5px 10px;
-      border-radius:3px;
-      color:#444;
-      margin-left:800px;
-    }    
+    
+    /* Right-click context menu */
+    .context-menu {
+      position: absolute;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
+      min-width: 160px;
+      display: none;
+    }
+    
+    .context-menu-item {
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #333;
+    }
+    
+    .context-menu-item:hover {
+      background: #f0f0f0;
+    }
+    
+    .context-menu-divider {
+      height: 1px;
+      background: #e1e1e1;
+      margin: 4px 0;
+    }
+    
+    /* Tools grid layout */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
+    }
+    
+    .tool-grid-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 8px 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      text-align: center;
+    }
+    
+    .tool-grid-item:hover {
+      background: #e0e0e0;
+    }
+    
+    .tool-grid-item.active {
+      background: #d0e5ff;
+      color: #0078d7;
+    }
+    
+    .tool-icon {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
   </style>
 </head>
 <body>
@@ -165,38 +242,11 @@
     <!-- Header -->
     <div class="header">
       <div class="menu">
-       <a href="signin.html" style="text-decoration:none;"> <div class="menu-item"><i class="fas fa-user" id="auth-indi"></i> Sign up</div></a>
-      </div>
-    </div>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <div class="panel">
-        <div class="panel-header">
-          <span>Tools</span>
-        </div>
-        <div id="hierarchy" class="panel-content">
-          <div class="hierarchy-item active" data-tool="brush"><i class="fas fa-paint-brush"></i><span>Brush</span></div>
-          <div class="hierarchy-item" data-tool="eraser"><i class="fas fa-eraser"></i><span>Eraser</span></div>
-          <div class="hierarchy-item" data-tool="line"><i class="fas fa-minus"></i><span>Line</span></div>
-          <div class="hierarchy-item" data-tool="rectangle"><i class="fas fa-square"></i><span>Rectangle</span></div>
-          <div class="hierarchy-item" data-tool="circle"><i class="fas fa-circle"></i><span>Circle</span></div>
-          <div class="hierarchy-item" data-tool="fill"><i class="fas fa-fill-drip"></i><span>Fill</span></div>
-          <div class="hierarchy-item" data-tool="eyedropper"><i class="fas fa-eye-dropper"></i><span>Eyedropper</span></div>
-          <div class="hierarchy-item" data-tool="spray"><i class="fas fa-spray-can"></i><span>Spray Paint</span></div>
-          <div class="hierarchy-item" data-tool="text"><i class="fas fa-font"></i><span>Text</span></div>
-          <div class="hierarchy-item" data-tool="select"><i class="fas fa-vector-square"></i><span>Select</span></div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-header"><span>Layers</span></div>
-        <div class="panel-content">
-          <div class="hierarchy-item"><i class="fas fa-eye"></i><span>Background</span></div>
-          <div class="hierarchy-item active"><i class="fas fa-eye"></i><span>Layer 1</span></div>
-          <div class="hierarchy-item"><i class="fas fa-eye"></i><span>Layer 2</span></div>
-          <button class="action-btn secondary" id="add-layer"><i class="fas fa-plus"></i> Add Layer</button>
-        </div>
+        <div class="menu-item"><i class="fas fa-home"></i> Home</div>
+        <div class="menu-item"><i class="fas fa-file"></i> File</div>
+        <div class="menu-item"><i class="fas fa-edit"></i> Edit</div>
+        <div class="menu-item"><i class="fas fa-eye"></i> View</div>
+        <div class="menu-item"><i class="fas fa-image"></i> Image</div>
       </div>
     </div>
 
@@ -219,92 +269,158 @@
       </div>
     </div>
 
-    <!-- Properties -->
-    <div class="properties">
-      <div class="tabs">
-        <div class="tab active">Brush</div>
-        <div class="tab">Colors</div>
-        <div class="tab">Layers</div>
+    <!-- Right Sidebar -->
+    <div class="sidebar">
+      <!-- Tools Panel -->
+      <div class="panel">
+        <div class="panel-header">
+          <span>Tools</span>
+        </div>
+        <div class="panel-content">
+          <div class="tools-grid">
+            <div class="tool-grid-item active" data-tool="brush">
+              <div class="tool-icon"><i class="fas fa-paint-brush"></i></div>
+              <span>Brush</span>
+            </div>
+            <div class="tool-grid-item" data-tool="eraser">
+              <div class="tool-icon"><i class="fas fa-eraser"></i></div>
+              <span>Eraser</span>
+            </div>
+            <div class="tool-grid-item" data-tool="line">
+              <div class="tool-icon"><i class="fas fa-minus"></i></div>
+              <span>Line</span>
+            </div>
+            <div class="tool-grid-item" data-tool="rectangle">
+              <div class="tool-icon"><i class="fas fa-square"></i></div>
+              <span>Rect</span>
+            </div>
+            <div class="tool-grid-item" data-tool="circle">
+              <div class="tool-icon"><i class="fas fa-circle"></i></div>
+              <span>Circle</span>
+            </div>
+            <div class="tool-grid-item" data-tool="fill">
+              <div class="tool-icon"><i class="fas fa-fill-drip"></i></div>
+              <span>Fill</span>
+            </div>
+            <div class="tool-grid-item" data-tool="eyedropper">
+              <div class="tool-icon"><i class="fas fa-eye-dropper"></i></div>
+              <span>Dropper</span>
+            </div>
+            <div class="tool-grid-item" data-tool="spray">
+              <div class="tool-icon"><i class="fas fa-spray-can"></i></div>
+              <span>Spray</span>
+            </div>
+            <div class="tool-grid-item" data-tool="text">
+              <div class="tool-icon"><i class="fas fa-font"></i></div>
+              <span>Text</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="property-group">
+      <!-- Brush Properties -->
+      <div class="panel">
         <div class="panel-header">Brush Properties</div>
-        <div class="property-item">
-          <div class="property-label">Size: <span id="brush-size-value">5</span>px</div>
-          <input id="prop-brushSize" type="range" class="property-slider" min="1" max="50" value="5" step="1">
-        </div>
-        <div class="property-item">
-          <div class="property-label">Opacity: <span id="opacity-value">100</span>%</div>
-          <input id="prop-opacity" type="range" class="property-slider" min="0.1" max="1" value="1" step="0.1">
-        </div>
-        <div class="property-item">
-          <div class="property-label">Hardness: <span id="hardness-value">100</span>%</div>
-          <input id="prop-hardness" type="range" class="property-slider" min="0" max="1" value="1" step="0.1">
-        </div>
-        <div class="property-item">
-          <div class="property-label">Smoothing</div>
-          <input id="prop-smoothing" type="checkbox" class="property-input" checked>
-        </div>
-        <div class="property-item">
-          <div class="property-label">Brush Preview</div>
-          <div class="brush-preview">
-            <div id="brush-preview-circle" class="brush-preview-circle"></div>
+        <div class="panel-content">
+          <div class="property-item">
+            <div class="property-label">Size: <span id="brush-size-value">5</span>px</div>
+            <input id="prop-brushSize" type="range" class="property-slider" min="1" max="50" value="5" step="1">
+          </div>
+          <div class="property-item">
+            <div class="property-label">Opacity: <span id="opacity-value">100</span>%</div>
+            <input id="prop-opacity" type="range" class="property-slider" min="0.1" max="1" value="1" step="0.1">
+          </div>
+          <div class="property-item">
+            <div class="property-label">Hardness: <span id="hardness-value">100</span>%</div>
+            <input id="prop-hardness" type="range" class="property-slider" min="0" max="1" value="1" step="0.1">
+          </div>
+          <div class="property-item">
+            <div class="property-label">Smoothing</div>
+            <input id="prop-smoothing" type="checkbox" class="property-input" checked>
+          </div>
+          <div class="property-item">
+            <div class="property-label">Brush Preview</div>
+            <div class="brush-preview">
+              <div id="brush-preview-circle" class="brush-preview-circle"></div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="property-group">
+      <!-- Colors Panel -->
+      <div class="panel">
         <div class="panel-header">Colors</div>
-        <div class="property-item">
-          <div class="property-label">Foreground Color</div>
-          <input id="prop-color" type="color" class="property-input" value="#ff0000">
-        </div>
-        <div class="property-item">
-          <div class="property-label">Background Color</div>
-          <input id="prop-bgColor" type="color" class="property-input" value="#ffffff">
-        </div>
-        <div class="property-item">
-          <div class="property-label">Color Palette</div>
-          <div class="color-picker">
-            <div class="color-option active" style="background-color: #ff0000;" data-color="#ff0000"></div>
-            <div class="color-option" style="background-color: #ff8000;" data-color="#ff8000"></div>
-            <div class="color-option" style="background-color: #ffff00;" data-color="#ffff00"></div>
-            <div class="color-option" style="background-color: #00ff00;" data-color="#00ff00"></div>
-            <div class="color-option" style="background-color: #00ffff;" data-color="#00ffff"></div>
-            <div class="color-option" style="background-color: #0000ff;" data-color="#0000ff"></div>
-            <div class="color-option" style="background-color: #8000ff;" data-color="#8000ff"></div>
-            <div class="color-option" style="background-color: #ff00ff;" data-color="#ff00ff"></div>
-            <div class="color-option" style="background-color: #000000;" data-color="#000000"></div>
-            <div class="color-option" style="background-color: #404040;" data-color="#404040"></div>
-            <div class="color-option" style="background-color: #808080;" data-color="#808080"></div>
-            <div class="color-option" style="background-color: #c0c0c0;" data-color="#c0c0c0"></div>
-            <div class="color-option" style="background-color: #ffffff;" data-color="#ffffff"></div>
-            <div class="color-option" style="background-color: #804000;" data-color="#804000"></div>
-            <div class="color-option" style="background-color: #408040;" data-color="#408040"></div>
+        <div class="panel-content">
+          <div class="current-color-display">
+            <div class="current-color-box" id="current-color-box" style="background-color: #ff0000;"></div>
+            <div>
+              <div class="property-label">Current Color</div>
+              <input id="prop-color" type="color" class="property-input" value="#ff0000">
+            </div>
+          </div>
+          <div class="property-item">
+            <div class="property-label">Color Palette</div>
+            <div class="color-picker">
+              <div class="color-option active" style="background-color: #ff0000;" data-color="#ff0000"></div>
+              <div class="color-option" style="background-color: #ff8000;" data-color="#ff8000"></div>
+              <div class="color-option" style="background-color: #ffff00;" data-color="#ffff00"></div>
+              <div class="color-option" style="background-color: #00ff00;" data-color="#00ff00"></div>
+              <div class="color-option" style="background-color: #00ffff;" data-color="#00ffff"></div>
+              <div class="color-option" style="background-color: #0000ff;" data-color="#0000ff"></div>
+              <div class="color-option" style="background-color: #8000ff;" data-color="#8000ff"></div>
+              <div class="color-option" style="background-color: #ff00ff;" data-color="#ff00ff"></div>
+              <div class="color-option" style="background-color: #000000;" data-color="#000000"></div>
+              <div class="color-option" style="background-color: #404040;" data-color="#404040"></div>
+              <div class="color-option" style="background-color: #808080;" data-color="#808080"></div>
+              <div class="color-option" style="background-color: #c0c0c0;" data-color="#c0c0c0"></div>
+              <div class="color-option" style="background-color: #ffffff;" data-color="#ffffff"></div>
+              <div class="color-option" style="background-color: #804000;" data-color="#804000"></div>
+              <div class="color-option" style="background-color: #408040;" data-color="#408040"></div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="property-group">
-        <div class="panel-header">Canvas</div>
-        <div class="property-item">
-          <div class="property-label">Show Grid</div>
-          <input id="prop-grid" type="checkbox" class="property-input">
+      <!-- Canvas & Layers Panel -->
+      <div class="panel">
+        <div class="panel-header">Canvas & Layers</div>
+        <div class="panel-content">
+          <div class="property-item">
+            <div class="property-label">Background Color</div>
+            <input id="prop-bgColor" type="color" class="property-input" value="#ffffff">
+          </div>
+          <div class="property-item">
+            <div class="property-label">Show Grid</div>
+            <input id="prop-grid" type="checkbox" class="property-input">
+          </div>
+          <div class="property-item">
+            <div class="property-label">Paper Texture</div>
+            <select id="prop-texture" class="property-input">
+              <option value="none">None</option>
+              <option value="paper">Paper</option>
+              <option value="canvas">Canvas</option>
+            </select>
+          </div>
+          <button class="action-btn" id="new-canvas"><i class="fas fa-file"></i> New Canvas</button>
+          <button class="action-btn secondary" id="add-layer"><i class="fas fa-plus"></i> Add Layer</button>
         </div>
-        <div class="property-item">
-          <div class="property-label">Paper Texture</div>
-          <select id="prop-texture" class="property-input">
-            <option value="none">None</option>
-            <option value="paper">Paper</option>
-            <option value="canvas">Canvas</option>
-          </select>
-        </div>
-        <button class="action-btn" id="new-canvas"><i class="fas fa-file"></i> New Canvas</button>
       </div>
     </div>
 
     <!-- Timeline (hidden for now) -->
     <div class="timeline"></div>
+  </div>
+
+  <!-- Right-click Context Menu -->
+  <div class="context-menu" id="context-menu">
+    <div class="context-menu-item" id="ctx-copy"><i class="fas fa-copy"></i> Copy</div>
+    <div class="context-menu-item" id="ctx-paste"><i class="fas fa-paste"></i> Paste</div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" id="ctx-undo"><i class="fas fa-undo"></i> Undo</div>
+    <div class="context-menu-item" id="ctx-redo"><i class="fas fa-redo"></i> Redo</div>
+    <div class="context-menu-divider"></div>
+    <div class="context-menu-item" id="ctx-select-all"><i class="fas fa-object-group"></i> Select All</div>
+    <div class="context-menu-item" id="ctx-clear"><i class="fas fa-trash"></i> Clear Selection</div>
   </div>
 
   <div class="status-bar">
@@ -321,6 +437,7 @@
     const tempCanvas = document.getElementById('temp-canvas');
     const ctx = canvas.getContext('2d');
     const tempCtx = tempCanvas.getContext('2d');
+    const contextMenu = document.getElementById('context-menu');
 
     const $ = sel => document.querySelector(sel);
     const $$ = sel => Array.from(document.querySelectorAll(sel));
@@ -399,6 +516,9 @@
 
     // Drawing functions
     function startDrawing(e) {
+      // Prevent context menu on right click
+      if (e.button === 2) return;
+      
       isDrawing = true;
       [lastX, lastY] = getMousePos(e);
       shapeStartX = lastX;
@@ -671,6 +791,7 @@
       currentColor = color;
       $('#prop-color').value = color;
       updateBrushPreview();
+      updateCurrentColorBox();
       
       // Update active color in palette
       $$('.color-option').forEach(option => {
@@ -679,7 +800,7 @@
       
       // Switch back to brush
       currentTool = 'brush';
-      $$('#hierarchy .hierarchy-item').forEach(item => {
+      $$('.tool-grid-item').forEach(item => {
         item.classList.toggle('active', item.dataset.tool === 'brush');
       });
     }
@@ -739,15 +860,31 @@
       preview.style.opacity = opacity;
     }
 
+    function updateCurrentColorBox() {
+      $('#current-color-box').style.backgroundColor = currentColor;
+    }
+
     function updateCanvasSize() {
       $('#canvas-size').textContent = `Canvas: ${canvas.width} × ${canvas.height}`;
     }
 
+    // Right-click context menu
+    function showContextMenu(e) {
+      e.preventDefault();
+      contextMenu.style.display = 'block';
+      contextMenu.style.left = `${e.pageX}px`;
+      contextMenu.style.top = `${e.pageY}px`;
+    }
+
+    function hideContextMenu() {
+      contextMenu.style.display = 'none';
+    }
+
     // ---------- UI Event Handlers ----------
     // Tool selection
-    $$('#hierarchy .hierarchy-item').forEach(el => {
+    $$('.tool-grid-item').forEach(el => {
       el.addEventListener('click', () => {
-        $$('#hierarchy .hierarchy-item').forEach(item => item.classList.remove('active'));
+        $$('.tool-grid-item').forEach(item => item.classList.remove('active'));
         el.classList.add('active');
         currentTool = el.dataset.tool;
         
@@ -788,7 +925,6 @@
     $('#prop-hardness').addEventListener('input', e => {
       hardness = parseFloat(e.target.value);
       $('#hardness-value').textContent = Math.round(hardness * 100);
-      // Note: Hardness would affect brush shape in a more advanced implementation
     });
 
     $('#prop-smoothing').addEventListener('change', e => {
@@ -799,6 +935,7 @@
     $('#prop-color').addEventListener('input', e => {
       currentColor = e.target.value;
       updateBrushPreview();
+      updateCurrentColorBox();
       
       // Update active color in palette
       $$('.color-option').forEach(option => {
@@ -812,6 +949,7 @@
         currentColor = option.dataset.color;
         $('#prop-color').value = currentColor;
         updateBrushPreview();
+        updateCurrentColorBox();
         
         $$('.color-option').forEach(opt => opt.classList.remove('active'));
         option.classList.add('active');
@@ -861,11 +999,27 @@
       alert("Layer added! In a full implementation, this would create a new layer.");
     });
 
+    // Context menu actions
+    $('#ctx-undo').addEventListener('click', undo);
+    $('#ctx-redo').addEventListener('click', redo);
+    $('#ctx-clear').addEventListener('click', () => {
+      clearCanvas();
+      saveState();
+      hideContextMenu();
+    });
+
     // Mouse events
     canvas.addEventListener('mousedown', startDrawing);
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', stopDrawing);
     canvas.addEventListener('mouseout', stopDrawing);
+    
+    // Right-click context menu
+    canvas.addEventListener('contextmenu', showContextMenu);
+    document.addEventListener('click', hideContextMenu);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') hideContextMenu();
+    });
 
     // Update cursor position
     canvas.addEventListener('mousemove', e => {
@@ -888,6 +1042,7 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
     updateBrushPreview();
+    updateCurrentColorBox();
   </script>
 </body>
 </html>
