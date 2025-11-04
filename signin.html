@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — Paint Alt</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide-icons"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans text-gray-800">
+
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 border border-gray-200">
+    <div class="flex justify-center mb-6">
+      <div class="flex items-center gap-2 text-2xl font-semibold">
+        <i data-lucide="palette" class="w-7 h-7 text-indigo-500"></i>
+        Paint<span class="text-indigo-500">Alt</span>
+      </div>
+    </div>
+
+    <h2 class="text-2xl font-semibold text-center mb-2">Create Account</h2>
+    <p class="text-center text-gray-500 text-sm mb-6">Store your paintings securely in the cloud</p>
+
+    <form id="signup-form" class="space-y-5">
+      <div>
+        <label for="email" class="block text-sm mb-1 font-medium">Email</label>
+        <div class="relative">
+          <i data-lucide="mail" class="absolute left-3 top-2.5 text-gray-400 w-5 h-5"></i>
+          <input id="email" type="email" required placeholder="you@example.com"
+            class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+        </div>
+      </div>
+
+      <div>
+        <label for="password" class="block text-sm mb-1 font-medium">Password</label>
+        <div class="relative">
+          <i data-lucide="lock" class="absolute left-3 top-2.5 text-gray-400 w-5 h-5"></i>
+          <input id="password" type="password" required placeholder="••••••••"
+            class="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+        </div>
+      </div>
+
+      <button type="submit"
+        class="w-full flex justify-center items-center gap-2 bg-indigo-500 hover:bg-indigo-600 text-white font-medium py-2.5 rounded-lg transition">
+        <i data-lucide="user-plus" class="w-5 h-5"></i>
+        Sign Up
+      </button>
+    </form>
+
+    <div class="my-6 flex items-center">
+      <hr class="flex-grow border-gray-300">
+      <span class="px-3 text-gray-400 text-sm">or</span>
+      <hr class="flex-grow border-gray-300">
+    </div>
+
+    <div class="space-y-3">
+      <button id="google-login"
+        class="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg py-2 hover:bg-gray-50 transition">
+        <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google">
+        Continue with Google
+      </button>
+
+      <button id="github-login"
+        class="w-full flex items-center justify-center gap-2 border border-gray-300 rounded-lg py-2 hover:bg-gray-50 transition">
+        <img src="https://www.svgrepo.com/show/512317/github-142.svg" class="w-5 h-5" alt="GitHub">
+        Continue with GitHub
+      </button>
+    </div>
+
+    <p class="text-sm text-center text-gray-500 mt-6">
+      Already have an account?
+      <a href="login.html" class="text-indigo-500 font-medium hover:underline">Log in</a>
+    </p>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    document.getElementById("signup-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      console.log("Signup attempt:", email, password);
+      // TODO: Add Supabase auth here
+    });
+  </script>
+</body>
+</html>
