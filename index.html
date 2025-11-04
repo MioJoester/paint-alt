@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Paint App - Light UI</title>
+  <title>Paint App - Enhanced</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
@@ -167,6 +167,8 @@
           <div class="hierarchy-item" data-tool="rectangle"><i class="fas fa-square"></i><span>Rectangle</span></div>
           <div class="hierarchy-item" data-tool="circle"><i class="fas fa-circle"></i><span>Circle</span></div>
           <div class="hierarchy-item" data-tool="fill"><i class="fas fa-fill-drip"></i><span>Fill</span></div>
+          <div class="hierarchy-item" data-tool="eyedropper"><i class="fas fa-eye-dropper"></i><span>Eyedropper</span></div>
+          <div class="hierarchy-item" data-tool="spray"><i class="fas fa-spray-can"></i><span>Spray Paint</span></div>
           <div class="hierarchy-item" data-tool="text"><i class="fas fa-font"></i><span>Text</span></div>
           <div class="hierarchy-item" data-tool="select"><i class="fas fa-vector-square"></i><span>Select</span></div>
         </div>
@@ -222,6 +224,10 @@
         <div class="property-item">
           <div class="property-label">Hardness: <span id="hardness-value">100</span>%</div>
           <input id="prop-hardness" type="range" class="property-slider" min="0" max="1" value="1" step="0.1">
+        </div>
+        <div class="property-item">
+          <div class="property-label">Smoothing</div>
+          <input id="prop-smoothing" type="checkbox" class="property-input">
         </div>
         <div class="property-item">
           <div class="property-label">Brush Preview</div>
@@ -312,15 +318,33 @@
     let hardness = 1;
     let bgColor = '#ffffff';
     let showGrid = false;
+    let smoothing = false;
     let canvasHistory = [];
     let historyIndex = -1;
+    let smoothPoints = [];
 
     // Initialize canvas
     function resizeCanvas() {
+      const oldCanvas = canvas.toDataURL();
       canvas.width = viewport.clientWidth;
       canvas.height = viewport.clientHeight;
-      clearCanvas();
-      saveState();
+      
+      // Restore previous content if it exists
+      if (canvasHistory.length > 0) {
+        const img = new Image();
+        img.onload = function() {
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+          if (showGrid) drawGrid();
+        };
+        img.src = oldCanvas;
+      } else {
+        clearCanvas();
+        saveState();
+      }
+      
+      updateCanvasSize();
     }
 
     function clearCanvas() {
@@ -360,6 +384,12 @@
         floodFill(lastX, lastY);
         isDrawing = false;
         saveState();
+      } else if (currentTool === 'eyedropper') {
+        pickColor(lastX, lastY);
+        isDrawing = false;
+      } else if (currentTool === 'spray') {
+        // Start spraying immediately
+        draw(e);
       }
     }
 
@@ -371,6 +401,42 @@
       ctx.globalAlpha = opacity;
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
+      
+      // Smoothing for brush and eraser
+      if (smoothing && (currentTool === 'brush' || currentTool === 'eraser')) {
+        smoothPoints.push({x, y});
+        if (smoothPoints.length > 3) smoothPoints.shift();
+        
+        if (smoothPoints.length >= 2) {
+          const smoothX = smoothPoints.reduce((sum, p) => sum + p.x, 0) / smoothPoints.length;
+          const smoothY = smoothPoints.reduce((sum, p) => sum + p.y, 0) / smoothPoints.length;
+          
+          if (currentTool === 'brush') {
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = brushSize;
+            ctx.globalCompositeOperation = 'source-over';
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(smoothX, smoothY);
+            ctx.stroke();
+            
+            [lastX, lastY] = [smoothX, smoothY];
+          } else if (currentTool === 'eraser') {
+            ctx.strokeStyle = bgColor;
+            ctx.lineWidth = brushSize;
+            ctx.globalCompositeOperation = 'destination-out';
+            
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(smoothX, smoothY);
+            ctx.stroke();
+            
+            [lastX, lastY] = [smoothX, smoothY];
+          }
+        }
+        return;
+      }
       
       switch(currentTool) {
         case 'brush':
@@ -394,27 +460,67 @@
           ctx.lineTo(x, y);
           ctx.stroke();
           break;
-          
-        case 'line':
-          // Temporary line drawing - will be finalized on mouse up
-          break;
-          
-        case 'rectangle':
-          // Temporary rectangle drawing - will be finalized on mouse up
-          break;
-          
-        case 'circle':
-          // Temporary circle drawing - will be finalized on mouse up
+
+        case 'spray':
+          // Spray paint effect
+          ctx.globalCompositeOperation = 'source-over';
+          const density = 20;
+          for (let i = 0; i < density; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const radius = Math.random() * brushSize;
+            const offsetX = Math.cos(angle) * radius;
+            const offsetY = Math.sin(angle) * radius;
+            
+            ctx.fillStyle = currentColor;
+            ctx.fillRect(x + offsetX, y + offsetY, 1, 1);
+          }
           break;
       }
       
       [lastX, lastY] = [x, y];
     }
 
-    function stopDrawing() {
+    function stopDrawing(e) {
       if (isDrawing) {
+        smoothPoints = []; // Clear smooth points
+        
+        // Handle shape tools on mouse up
+        if (currentTool === 'line' || currentTool === 'rectangle' || currentTool === 'circle') {
+          const [x, y] = getMousePos(e);
+          drawShape(lastX, lastY, x, y);
+        }
         isDrawing = false;
         saveState();
+      }
+    }
+
+    // Draw shapes (line, rectangle, circle)
+    function drawShape(startX, startY, endX, endY) {
+      ctx.globalAlpha = opacity;
+      ctx.strokeStyle = currentColor;
+      ctx.lineWidth = brushSize;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.globalCompositeOperation = 'source-over';
+
+      switch(currentTool) {
+        case 'line':
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+          break;
+
+        case 'rectangle':
+          ctx.strokeRect(startX, startY, endX - startX, endY - startY);
+          break;
+
+        case 'circle':
+          const radius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2));
+          ctx.beginPath();
+          ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+          ctx.stroke();
+          break;
       }
     }
 
@@ -485,22 +591,55 @@
       } : {r: 0, g: 0, b: 0};
     }
 
+    function rgbToHex(r, g, b) {
+      return "#" + [r, g, b].map(x => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? "0" + hex : hex;
+      }).join('');
+    }
+
+    // Eyedropper tool
+    function pickColor(x, y) {
+      const imageData = ctx.getImageData(x, y, 1, 1);
+      const pixel = imageData.data;
+      const color = rgbToHex(pixel[0], pixel[1], pixel[2]);
+      
+      currentColor = color;
+      $('#prop-color').value = color;
+      updateBrushPreview();
+      
+      // Update active color in palette
+      $$('.color-option').forEach(option => {
+        option.classList.toggle('active', option.dataset.color === color);
+      });
+      
+      // Switch back to brush
+      currentTool = 'brush';
+      $$('#hierarchy .hierarchy-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.tool === 'brush');
+      });
+    }
+
     // History functions
     function saveState() {
-      // Remove any future states if we're not at the end of history
-      if (historyIndex < canvasHistory.length - 1) {
-        canvasHistory = canvasHistory.slice(0, historyIndex + 1);
-      }
-      
-      // Save current canvas state
-      canvasHistory.push(canvas.toDataURL());
-      historyIndex++;
-      
-      // Limit history size
-      if (canvasHistory.length > 50) {
-        canvasHistory.shift();
-        historyIndex--;
-      }
+      // Debounce to prevent excessive saves
+      if (saveState.timeout) clearTimeout(saveState.timeout);
+      saveState.timeout = setTimeout(() => {
+        // Remove any future states if we're not at the end of history
+        if (historyIndex < canvasHistory.length - 1) {
+          canvasHistory = canvasHistory.slice(0, historyIndex + 1);
+        }
+        
+        // Save current canvas state
+        canvasHistory.push(canvas.toDataURL());
+        historyIndex++;
+        
+        // Limit history size
+        if (canvasHistory.length > 30) {
+          canvasHistory.shift();
+          historyIndex--;
+        }
+      }, 100);
     }
 
     function undo() {
@@ -532,136 +671,4 @@
       const preview = document.getElementById('brush-preview-circle');
       preview.style.width = `${brushSize}px`;
       preview.style.height = `${brushSize}px`;
-      preview.style.backgroundColor = currentColor;
-      preview.style.opacity = opacity;
-    }
-
-    function updateCanvasSize() {
-      $('#canvas-size').textContent = `Canvas: ${canvas.width} × ${canvas.height}`;
-    }
-
-    // ---------- UI Event Handlers ----------
-    // Tool selection
-    $$('#hierarchy .hierarchy-item').forEach(el => {
-      el.addEventListener('click', () => {
-        $$('#hierarchy .hierarchy-item').forEach(item => item.classList.remove('active'));
-        el.classList.add('active');
-        currentTool = el.dataset.tool;
-      });
-    });
-
-    // Brush properties
-    $('#prop-brushSize').addEventListener('input', e => {
-      brushSize = parseInt(e.target.value);
-      $('#brush-size-value').textContent = brushSize;
-      updateBrushPreview();
-    });
-
-    $('#prop-opacity').addEventListener('input', e => {
-      opacity = parseFloat(e.target.value);
-      $('#opacity-value').textContent = Math.round(opacity * 100);
-      updateBrushPreview();
-    });
-
-    $('#prop-hardness').addEventListener('input', e => {
-      hardness = parseFloat(e.target.value);
-      $('#hardness-value').textContent = Math.round(hardness * 100);
-      // Note: Hardness would affect brush shape in a more advanced implementation
-    });
-
-    // Color selection
-    $('#prop-color').addEventListener('input', e => {
-      currentColor = e.target.value;
-      updateBrushPreview();
-      
-      // Update active color in palette
-      $$('.color-option').forEach(option => {
-        option.classList.toggle('active', option.dataset.color === currentColor);
-      });
-    });
-
-    // Color palette
-    $$('.color-option').forEach(option => {
-      option.addEventListener('click', () => {
-        currentColor = option.dataset.color;
-        $('#prop-color').value = currentColor;
-        updateBrushPreview();
-        
-        $$('.color-option').forEach(opt => opt.classList.remove('active'));
-        option.classList.add('active');
-      });
-    });
-
-    // Canvas properties
-    $('#prop-bgColor').addEventListener('input', e => {
-      bgColor = e.target.value;
-      clearCanvas();
-      saveState();
-    });
-
-    $('#prop-grid').addEventListener('change', e => {
-      showGrid = e.target.checked;
-      clearCanvas();
-    });
-
-    // Viewport controls
-    $('#clear').addEventListener('click', () => {
-      if (confirm("Clear the entire canvas?")) {
-        clearCanvas();
-        saveState();
-      }
-    });
-    
-    $('#save').addEventListener('click', () => {
-      const link = document.createElement('a');
-      link.download = 'painting.png';
-      link.href = canvas.toDataURL();
-      link.click();
-    });
-
-    $('#undo').addEventListener('click', undo);
-    $('#redo').addEventListener('click', redo);
-
-    $('#new-canvas').addEventListener('click', () => {
-      if (confirm("Create a new canvas? Any unsaved changes will be lost.")) {
-        clearCanvas();
-        canvasHistory = [];
-        historyIndex = -1;
-        saveState();
-      }
-    });
-
-    $('#add-layer').addEventListener('click', () => {
-      alert("Layer added! In a full implementation, this would create a new layer.");
-    });
-
-    // Mouse events
-    canvas.addEventListener('mousedown', startDrawing);
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', stopDrawing);
-    canvas.addEventListener('mouseout', stopDrawing);
-
-    // Update cursor position
-    canvas.addEventListener('mousemove', e => {
-      const [x, y] = getMousePos(e);
-      $('#cursor').textContent = `Cursor: (${Math.round(x)}, ${Math.round(y)})`;
-    });
-
-    // ---------- Animation Loop ----------
-    let last = performance.now();
-    function animate(now) {
-      requestAnimationFrame(animate);
-      const dt = (now - last) / 1000; last = now;
-      
-      // Update FPS counter
-      $('#fps').textContent = `FPS: ${Math.round(1/Math.max(dt,1e-3))}`;
-    }
-    requestAnimationFrame(animate);
-
-    // Initialize
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-    updateBrushPreview();
-  </script>
-</body>
-</html>
+      preview.style.backgroundColor =
