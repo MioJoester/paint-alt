@@ -3,45 +3,43 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Paint App - Engine UI</title>
+  <title>Paint App - Light UI</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif}
-    body{overflow:hidden;background:#2d2d30;color:#ccc}
+    body{overflow:hidden;background:#f5f5f7;color:#333}
     .container{display:grid;height:100vh;grid-template-columns:250px 1fr 300px;grid-template-rows:40px 1fr 0px;grid-template-areas:"header header header" "sidebar viewport properties" "timeline timeline timeline";}
-    .header{grid-area:header;background:#3e3e42;border-bottom:1px solid #1e1e1e;display:flex;align-items:center;padding:0 15px}
+    .header{grid-area:header;background:#f8f8f8;border-bottom:1px solid #e1e1e1;display:flex;align-items:center;padding:0 15px}
     .menu{display:flex;gap:20px}
-    .menu-item{font-size:13px;cursor:pointer;padding:5px 10px;border-radius:3px}
-    .menu-item:hover{background:#2d2d30}
-    .sidebar{grid-area:sidebar;background:#252526;border-right:1px solid #1e1e1e;padding:10px;overflow-y:auto}
+    .menu-item{font-size:13px;cursor:pointer;padding:5px 10px;border-radius:3px;color:#444}
+    .menu-item:hover{background:#e9e9e9}
+    .sidebar{grid-area:sidebar;background:#f0f0f0;border-right:1px solid #d1d1d1;padding:10px;overflow-y:auto}
     .panel{margin-bottom:15px}
-    .panel-header{font-size:12px;text-transform:uppercase;color:#969696;padding:5px 0;display:flex;justify-content:space-between;align-items:center}
+    .panel-header{font-size:12px;text-transform:uppercase;color:#666;padding:5px 0;display:flex;justify-content:space-between;align-items:center}
     .panel-content{padding:5px 0}
-    .hierarchy-item{padding:5px 10px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;border-radius:3px}
-    .hierarchy-item:hover{background:#2a2d2e}
-    .hierarchy-item.active{background:#37373d}
-    .viewport{grid-area:viewport;position:relative;overflow:hidden;background:#fff}
-    .viewport-overlay{position:absolute;top:10px;left:10px;color:white;font-size:12px;background:rgba(0,0,0,.5);padding:5px 10px;border-radius:3px;pointer-events:none}
+    .hierarchy-item{padding:5px 10px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;border-radius:3px;color:#444}
+    .hierarchy-item:hover{background:#e0e0e0}
+    .hierarchy-item.active{background:#d0e5ff;color:#0066cc}
+    .viewport{grid-area:viewport;position:relative;overflow:hidden;background:#fff;border:1px solid #d1d1d1}
+    .viewport-overlay{position:absolute;top:10px;left:10px;color:#333;font-size:12px;background:rgba(255,255,255,.8);padding:5px 10px;border-radius:3px;pointer-events:none;border:1px solid #ddd}
     .viewport-controls{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:5px}
-    .viewport-btn{width:30px;height:30px;background:rgba(30,30,30,.8);border:1px solid #3e3e42;color:#ccc;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-    .viewport-btn:hover{background:rgba(30,30,30,1)}
-    .properties{grid-area:properties;background:#252526;border-left:1px solid #1e1e1e;padding:15px;overflow-y:auto}
+    .viewport-btn{width:30px;height:30px;background:rgba(255,255,255,.9);border:1px solid #ccc;color:#555;border-radius:3px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .viewport-btn:hover{background:rgba(240,240,240,1)}
+    .properties{grid-area:properties;background:#f0f0f0;border-left:1px solid #d1d1d1;padding:15px;overflow-y:auto}
     .property-group{margin-bottom:15px}
     .property-item{margin-bottom:10px}
-    .property-label{font-size:12px;color:#969696;margin-bottom:5px}
-    .property-input{width:100%;background:#3c3c3c;border:1px solid #1e1e1e;color:#ccc;padding:5px 8px;border-radius:3px}
+    .property-label{font-size:12px;color:#666;margin-bottom:5px}
+    .property-input{width:100%;background:#fff;border:1px solid #ccc;color:#333;padding:5px 8px;border-radius:3px}
     .property-slider{width:100%}
-    .tabs{display:flex;border-bottom:1px solid #1e1e1e;margin-bottom:10px}
-    .tab{padding:5px 15px;font-size:12px;cursor:pointer;border-bottom:2px solid transparent}
-    .tab.active{border-bottom:2px solid #007acc;color:#fff}
-    .status-bar{position:fixed;bottom:0;left:0;right:0;height:22px;background:#007acc;display:flex;align-items:center;padding:0 10px;font-size:12px;z-index:1000}
-    .toolbar{position:absolute;top:50px;left:10px;display:flex;flex-direction:column;gap:5px;background:rgba(30,30,30,.8);padding:5px;border-radius:3px;border:1px solid #3e3e42}
-    .tool-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px}
-    .tool-btn:hover{background:#37373d}
-    .tool-btn.active{background:#007acc}
+    .tabs{display:flex;border-bottom:1px solid #d1d1d1;margin-bottom:10px}
+    .tab{padding:5px 15px;font-size:12px;cursor:pointer;border-bottom:2px solid transparent;color:#666}
+    .tab.active{border-bottom:2px solid #0078d7;color:#0078d7}
+    .status-bar{position:fixed;bottom:0;left:0;right:0;height:22px;background:#e1e1e1;display:flex;align-items:center;padding:0 10px;font-size:12px;z-index:1000;color:#555;border-top:1px solid #d1d1d1}
+    .toolbar{position:absolute;top:50px;left:10px;display:flex;flex-direction:column;gap:5px;background:rgba(255,255,255,.9);padding:5px;border-radius:3px;border:1px solid #ccc}
+    .tool-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:3px;color:#555}
+    .tool-btn:hover{background:#e9e9e9}
+    .tool-btn.active{background:#d0e5ff;color:#0078d7}
     .timeline{display:none}
-    /* small helper for disabled inputs */
-    .disabled{opacity:.6;pointer-events:none}
     
     /* Canvas styling */
     #paint-canvas {
@@ -65,27 +63,81 @@
       height: 20px;
       border-radius: 3px;
       cursor: pointer;
-      border: 1px solid #555;
+      border: 1px solid #ccc;
     }
     .color-option.active {
-      border: 2px solid white;
-      box-shadow: 0 0 5px rgba(255,255,255,0.5);
+      border: 2px solid #0078d7;
+      box-shadow: 0 0 5px rgba(0,120,215,0.5);
     }
     
     /* Brush preview */
     .brush-preview {
       width: 100%;
       height: 40px;
-      background: #3c3c3c;
+      background: #fff;
       border-radius: 3px;
       margin-top: 5px;
       display: flex;
       align-items: center;
       justify-content: center;
+      border: 1px solid #ddd;
     }
     .brush-preview-circle {
       border-radius: 50%;
       background: currentColor;
+      border: 1px solid rgba(0,0,0,0.2);
+    }
+    
+    /* Custom slider styling */
+    input[type="range"] {
+      -webkit-appearance: none;
+      height: 6px;
+      background: #ddd;
+      border-radius: 3px;
+      outline: none;
+    }
+    
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #0078d7;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    
+    /* Checkbox styling */
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #0078d7;
+    }
+    
+    /* Button styling */
+    .action-btn {
+      background: #0078d7;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      margin-top: 10px;
+      width: 100%;
+    }
+    
+    .action-btn:hover {
+      background: #106ebe;
+    }
+    
+    .action-btn.secondary {
+      background: #f0f0f0;
+      color: #333;
+      border: 1px solid #ccc;
+    }
+    
+    .action-btn.secondary:hover {
+      background: #e0e0e0;
     }
   </style>
 </head>
@@ -94,7 +146,11 @@
     <!-- Header -->
     <div class="header">
       <div class="menu">
-        <a href="index.html"><div class="menu-item"><i class="fas fa-home"></i> </div></a>
+        <div class="menu-item"><i class="fas fa-home"></i> Home</div>
+        <div class="menu-item"><i class="fas fa-file"></i> File</div>
+        <div class="menu-item"><i class="fas fa-edit"></i> Edit</div>
+        <div class="menu-item"><i class="fas fa-eye"></i> View</div>
+        <div class="menu-item"><i class="fas fa-image"></i> Image</div>
       </div>
     </div>
 
@@ -111,6 +167,8 @@
           <div class="hierarchy-item" data-tool="rectangle"><i class="fas fa-square"></i><span>Rectangle</span></div>
           <div class="hierarchy-item" data-tool="circle"><i class="fas fa-circle"></i><span>Circle</span></div>
           <div class="hierarchy-item" data-tool="fill"><i class="fas fa-fill-drip"></i><span>Fill</span></div>
+          <div class="hierarchy-item" data-tool="text"><i class="fas fa-font"></i><span>Text</span></div>
+          <div class="hierarchy-item" data-tool="select"><i class="fas fa-vector-square"></i><span>Select</span></div>
         </div>
       </div>
 
@@ -120,47 +178,49 @@
           <div class="hierarchy-item"><i class="fas fa-eye"></i><span>Background</span></div>
           <div class="hierarchy-item active"><i class="fas fa-eye"></i><span>Layer 1</span></div>
           <div class="hierarchy-item"><i class="fas fa-eye"></i><span>Layer 2</span></div>
+          <button class="action-btn secondary" id="add-layer"><i class="fas fa-plus"></i> Add Layer</button>
         </div>
       </div>
     </div>
 
     <!-- Viewport -->
     <div class="viewport" id="viewport">
-      <div class="viewport-overlay">Canvas</div>
+      <div class="viewport-overlay">Canvas - 100%</div>
       <canvas id="paint-canvas"></canvas>
       <div class="toolbar">
-        <div class="tool-btn active"><i class="fas fa-hand-paper"></i></div>
-        <div class="tool-btn"><i class="fas fa-arrows-alt"></i></div>
-        <div class="tool-btn"><i class="fas fa-sync"></i></div>
-        <div class="tool-btn"><i class="fas fa-expand"></i></div>
+        <div class="tool-btn active" title="Hand Tool"><i class="fas fa-hand-paper"></i></div>
+        <div class="tool-btn" title="Zoom Tool"><i class="fas fa-search"></i></div>
+        <div class="tool-btn" title="Rotate Canvas"><i class="fas fa-sync"></i></div>
+        <div class="tool-btn" title="Fullscreen"><i class="fas fa-expand"></i></div>
       </div>
       <div class="viewport-controls">
-        <div class="viewport-btn" id="clear"><i class="fas fa-trash"></i></div>
-        <div class="viewport-btn" id="save"><i class="fas fa-save"></i></div>
-        <div class="viewport-btn" id="settings"><i class="fas fa-cog"></i></div>
+        <div class="viewport-btn" id="clear" title="Clear Canvas"><i class="fas fa-trash"></i></div>
+        <div class="viewport-btn" id="save" title="Save"><i class="fas fa-save"></i></div>
+        <div class="viewport-btn" id="undo" title="Undo"><i class="fas fa-undo"></i></div>
+        <div class="viewport-btn" id="redo" title="Redo"><i class="fas fa-redo"></i></div>
       </div>
     </div>
 
     <!-- Properties -->
     <div class="properties">
       <div class="tabs">
-        <div class="tab active">Properties</div>
-        <div class="tab">Materials</div>
-        <div class="tab">History</div>
+        <div class="tab active">Brush</div>
+        <div class="tab">Colors</div>
+        <div class="tab">Layers</div>
       </div>
 
       <div class="property-group">
-        <div class="panel-header">Brush</div>
+        <div class="panel-header">Brush Properties</div>
         <div class="property-item">
-          <div class="property-label">Size</div>
+          <div class="property-label">Size: <span id="brush-size-value">5</span>px</div>
           <input id="prop-brushSize" type="range" class="property-slider" min="1" max="50" value="5" step="1">
         </div>
         <div class="property-item">
-          <div class="property-label">Opacity</div>
+          <div class="property-label">Opacity: <span id="opacity-value">100</span>%</div>
           <input id="prop-opacity" type="range" class="property-slider" min="0.1" max="1" value="1" step="0.1">
         </div>
         <div class="property-item">
-          <div class="property-label">Hardness</div>
+          <div class="property-label">Hardness: <span id="hardness-value">100</span>%</div>
           <input id="prop-hardness" type="range" class="property-slider" min="0" max="1" value="1" step="0.1">
         </div>
         <div class="property-item">
@@ -174,22 +234,31 @@
       <div class="property-group">
         <div class="panel-header">Colors</div>
         <div class="property-item">
-          <div class="property-label">Current Color</div>
+          <div class="property-label">Foreground Color</div>
           <input id="prop-color" type="color" class="property-input" value="#ff0000">
         </div>
         <div class="property-item">
-          <div class="property-label">Palette</div>
+          <div class="property-label">Background Color</div>
+          <input id="prop-bgColor" type="color" class="property-input" value="#ffffff">
+        </div>
+        <div class="property-item">
+          <div class="property-label">Color Palette</div>
           <div class="color-picker">
             <div class="color-option active" style="background-color: #ff0000;" data-color="#ff0000"></div>
-            <div class="color-option" style="background-color: #00ff00;" data-color="#00ff00"></div>
-            <div class="color-option" style="background-color: #0000ff;" data-color="#0000ff"></div>
+            <div class="color-option" style="background-color: #ff8000;" data-color="#ff8000"></div>
             <div class="color-option" style="background-color: #ffff00;" data-color="#ffff00"></div>
-            <div class="color-option" style="background-color: #ff00ff;" data-color="#ff00ff"></div>
+            <div class="color-option" style="background-color: #00ff00;" data-color="#00ff00"></div>
             <div class="color-option" style="background-color: #00ffff;" data-color="#00ffff"></div>
+            <div class="color-option" style="background-color: #0000ff;" data-color="#0000ff"></div>
+            <div class="color-option" style="background-color: #8000ff;" data-color="#8000ff"></div>
+            <div class="color-option" style="background-color: #ff00ff;" data-color="#ff00ff"></div>
             <div class="color-option" style="background-color: #000000;" data-color="#000000"></div>
+            <div class="color-option" style="background-color: #404040;" data-color="#404040"></div>
+            <div class="color-option" style="background-color: #808080;" data-color="#808080"></div>
+            <div class="color-option" style="background-color: #c0c0c0;" data-color="#c0c0c0"></div>
             <div class="color-option" style="background-color: #ffffff;" data-color="#ffffff"></div>
-            <div class="color-option" style="background-color: #ffa500;" data-color="#ffa500"></div>
-            <div class="color-option" style="background-color: #800080;" data-color="#800080"></div>
+            <div class="color-option" style="background-color: #804000;" data-color="#804000"></div>
+            <div class="color-option" style="background-color: #408040;" data-color="#408040"></div>
           </div>
         </div>
       </div>
@@ -197,13 +266,18 @@
       <div class="property-group">
         <div class="panel-header">Canvas</div>
         <div class="property-item">
-          <div class="property-label">Background Color</div>
-          <input id="prop-bgColor" type="color" class="property-input" value="#ffffff">
-        </div>
-        <div class="property-item">
-          <div class="property-label">Grid</div>
+          <div class="property-label">Show Grid</div>
           <input id="prop-grid" type="checkbox" class="property-input">
         </div>
+        <div class="property-item">
+          <div class="property-label">Paper Texture</div>
+          <select id="prop-texture" class="property-input">
+            <option value="none">None</option>
+            <option value="paper">Paper</option>
+            <option value="canvas">Canvas</option>
+          </select>
+        </div>
+        <button class="action-btn" id="new-canvas"><i class="fas fa-file"></i> New Canvas</button>
       </div>
     </div>
 
@@ -212,9 +286,10 @@
   </div>
 
   <div class="status-bar">
-    <div style="margin-right:15px;">Ready</div>
+    <div style="margin-right:15px;">Ready to draw</div>
     <div id="fps" style="margin-right:15px;">FPS: —</div>
     <div id="cursor">Cursor: (0, 0)</div>
+    <div id="canvas-size" style="margin-left:auto;">Canvas: 800 × 600</div>
   </div>
 
   <script>
@@ -237,18 +312,22 @@
     let hardness = 1;
     let bgColor = '#ffffff';
     let showGrid = false;
+    let canvasHistory = [];
+    let historyIndex = -1;
 
     // Initialize canvas
     function resizeCanvas() {
       canvas.width = viewport.clientWidth;
       canvas.height = viewport.clientHeight;
       clearCanvas();
+      saveState();
     }
 
     function clearCanvas() {
       ctx.fillStyle = bgColor;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       if (showGrid) drawGrid();
+      updateCanvasSize();
     }
 
     function drawGrid() {
@@ -280,6 +359,7 @@
       if (currentTool === 'fill') {
         floodFill(lastX, lastY);
         isDrawing = false;
+        saveState();
       }
     }
 
@@ -332,7 +412,10 @@
     }
 
     function stopDrawing() {
-      isDrawing = false;
+      if (isDrawing) {
+        isDrawing = false;
+        saveState();
+      }
     }
 
     function getMousePos(e) {
@@ -402,6 +485,48 @@
       } : {r: 0, g: 0, b: 0};
     }
 
+    // History functions
+    function saveState() {
+      // Remove any future states if we're not at the end of history
+      if (historyIndex < canvasHistory.length - 1) {
+        canvasHistory = canvasHistory.slice(0, historyIndex + 1);
+      }
+      
+      // Save current canvas state
+      canvasHistory.push(canvas.toDataURL());
+      historyIndex++;
+      
+      // Limit history size
+      if (canvasHistory.length > 50) {
+        canvasHistory.shift();
+        historyIndex--;
+      }
+    }
+
+    function undo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        const img = new Image();
+        img.onload = function() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+        };
+        img.src = canvasHistory[historyIndex];
+      }
+    }
+
+    function redo() {
+      if (historyIndex < canvasHistory.length - 1) {
+        historyIndex++;
+        const img = new Image();
+        img.onload = function() {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+        };
+        img.src = canvasHistory[historyIndex];
+      }
+    }
+
     // Update brush preview
     function updateBrushPreview() {
       const preview = document.getElementById('brush-preview-circle');
@@ -409,6 +534,10 @@
       preview.style.height = `${brushSize}px`;
       preview.style.backgroundColor = currentColor;
       preview.style.opacity = opacity;
+    }
+
+    function updateCanvasSize() {
+      $('#canvas-size').textContent = `Canvas: ${canvas.width} × ${canvas.height}`;
     }
 
     // ---------- UI Event Handlers ----------
@@ -424,16 +553,19 @@
     // Brush properties
     $('#prop-brushSize').addEventListener('input', e => {
       brushSize = parseInt(e.target.value);
+      $('#brush-size-value').textContent = brushSize;
       updateBrushPreview();
     });
 
     $('#prop-opacity').addEventListener('input', e => {
       opacity = parseFloat(e.target.value);
+      $('#opacity-value').textContent = Math.round(opacity * 100);
       updateBrushPreview();
     });
 
     $('#prop-hardness').addEventListener('input', e => {
       hardness = parseFloat(e.target.value);
+      $('#hardness-value').textContent = Math.round(hardness * 100);
       // Note: Hardness would affect brush shape in a more advanced implementation
     });
 
@@ -464,6 +596,7 @@
     $('#prop-bgColor').addEventListener('input', e => {
       bgColor = e.target.value;
       clearCanvas();
+      saveState();
     });
 
     $('#prop-grid').addEventListener('change', e => {
@@ -472,13 +605,34 @@
     });
 
     // Viewport controls
-    $('#clear').addEventListener('click', clearCanvas);
+    $('#clear').addEventListener('click', () => {
+      if (confirm("Clear the entire canvas?")) {
+        clearCanvas();
+        saveState();
+      }
+    });
     
     $('#save').addEventListener('click', () => {
       const link = document.createElement('a');
       link.download = 'painting.png';
       link.href = canvas.toDataURL();
       link.click();
+    });
+
+    $('#undo').addEventListener('click', undo);
+    $('#redo').addEventListener('click', redo);
+
+    $('#new-canvas').addEventListener('click', () => {
+      if (confirm("Create a new canvas? Any unsaved changes will be lost.")) {
+        clearCanvas();
+        canvasHistory = [];
+        historyIndex = -1;
+        saveState();
+      }
+    });
+
+    $('#add-layer').addEventListener('click', () => {
+      alert("Layer added! In a full implementation, this would create a new layer.");
     });
 
     // Mouse events
